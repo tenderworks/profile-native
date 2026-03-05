@@ -1,30 +1,41 @@
 ---
 name: profile-native
-description: Profile native code to understand it's performance
+description: Profile native code to understand its performance
 license: Apache-2.0
-compatibility: Requires samply
+compatibility: Requires samply and atos (macOS)
 ---
 
 To profile native code, first make sure samply is installed.
 
-You can run samply like this:
+## Workflow
+
+1. Record a profile with samply:
 
 ```
 $ samply record -s -o profile.json -- slow_program
 ```
 
-It will profile `slow_program` and output a JSON file with the profile results.
-
-Samply does not symbolize functions by default. On macOS, run `symbolicate.rb` to resolve addresses to function names using `atos`:
+2. Symbolicate the profile (resolves hex addresses to function names using `atos`):
 
 ```
 $ ruby symbolicate.rb profile.json
 ```
 
-This overwrites the profile in place. You can also specify an output path:
+This overwrites the profile in place. You can optionally specify a separate output path:
 
 ```
 $ ruby symbolicate.rb profile.json symbolicated.json
 ```
 
-Then use `ff2md.rb` to convert the symbolicated JSON file into an AI-friendly markdown format.
+3. Convert the symbolicated profile to AI-friendly markdown:
+
+```
+$ ruby ff2md.rb profile.json > profile.md
+```
+
+## Scripts
+
+All scripts live in the `scripts/` directory.
+
+- **`symbolicate.rb`** — Reads a samply profile JSON, finds all unsymbolized hex-address function names, groups them by library, batch-resolves them via `atos`, and writes the updated profile. Supports gzipped input.
+- **`ff2md.rb`** — Converts a Firefox-format profile JSON (as produced by samply) into a markdown report with top functions, category breakdown, and a call tree.
